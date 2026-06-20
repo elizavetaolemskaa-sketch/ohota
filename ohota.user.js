@@ -98,20 +98,24 @@
     // Подсчёт баллов по истории
 function calculateScore(historyText) {
     if (!historyText) return 0;
-    const text = historyText.toLowerCase();
-    // Если нет слова "поднял" или "подняла" – баллов нет
-    if (!/(поднял[а]?)/i.test(text)) return 0;
-    // Ищем все пары "прилагательное + существительное" (упитанн, обычн, хил)
-    const regex = /(упитанн\S*|обычн\S*|хил\S*)\s+(\S+)/gi;
-    let score = 0;
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-        const adj = match[1];
-        if (adj.includes('упитанн')) score += 4;
-        else if (adj.includes('обычн')) score += 2;
-        else if (adj.includes('хил')) score += 1;
+    const text = historyText;
+    // Разбиваем на предложения по . ! ? и другим разделителям
+    const sentences = text.split(/[.!?]\s*/).filter(s => s.trim().length > 0);
+    let totalScore = 0;
+    for (const sentence of sentences) {
+        if (/(поднял[а]?)/i.test(sentence)) {
+            // Ищем прилагательные в этом предложении
+            const regex = /(упитанн\S*|обычн\S*|хил\S*)\s+(\S+)/gi;
+            let match;
+            while ((match = regex.exec(sentence)) !== null) {
+                const adj = match[1];
+                if (adj.includes('упитанн')) totalScore += 4;
+                else if (adj.includes('обычн')) totalScore += 2;
+                else if (adj.includes('хил')) totalScore += 1;
+            }
+        }
     }
-    return score;
+    return totalScore;
 }
 
     function insertReport(text) {
