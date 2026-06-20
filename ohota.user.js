@@ -99,24 +99,19 @@
 function calculateScore(historyText) {
     if (!historyText) return 0;
     const text = historyText.toLowerCase();
-    // Ищем "поднял(а)" и затем ближайшее прилагательное (упитанн, обычн, хил) + существительное
-    const regex = /поднял[а]?\s+(?:с\s+земли\s+)?.*?(упитанн\S*|обычн\S*|хил\S*)\s+(\S+)/gi;
+    // Если нет слова "поднял" или "подняла" – баллов нет
+    if (!/(поднял[а]?)/i.test(text)) return 0;
+    // Ищем все пары "прилагательное + существительное" (упитанн, обычн, хил)
+    const regex = /(упитанн\S*|обычн\S*|хил\S*)\s+(\S+)/gi;
+    let score = 0;
     let match;
-    const pairs = new Set();
     while ((match = regex.exec(text)) !== null) {
         const adj = match[1];
-        const noun = match[2];
-        const key = adj + '|' + noun;
-        pairs.add(key);
-    }
-    let score = 0;
-    for (const key of pairs) {
-        if (key.includes('упитанн')) score += 4;
-        else if (key.includes('обычн')) score += 2;
-        else if (key.includes('хил')) score += 1;
+        if (adj.includes('упитанн')) score += 4;
+        else if (adj.includes('обычн')) score += 2;
+        else if (adj.includes('хил')) score += 1;
     }
     return score;
-
 }
 
     function insertReport(text) {
