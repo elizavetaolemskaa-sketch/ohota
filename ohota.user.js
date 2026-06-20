@@ -8,6 +8,8 @@
 // @match        https://catwar.net/blog5504
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=catwar.net
 // @grant        none
+// @updateURL    https://github.com/elizavetaolemskaa-sketch/ohota/raw/refs/heads/main/ohota.user.js
+// @downloadURL  https://github.com/elizavetaolemskaa-sketch/ohota/raw/refs/heads/main/ohota.user.js
 // ==/UserScript==
 
 (function() {
