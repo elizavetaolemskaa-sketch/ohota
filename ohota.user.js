@@ -305,7 +305,7 @@ if (carriersRaw) {
         }
         formattedCarriers.push(formatted);
     }
-    carriersFormatted = `\n[b]Носильщики:[/b] ${formattedCarriers.join(', ')}`;
+    carriersFormatted = `\n[b]Носильщики:[/b] ${formattedCarriers.join(', ')}.`;
 } else {
     carriersFormatted = `\n[b]Носильщики:[/b] —.`;
 }
@@ -314,8 +314,8 @@ if (carriersRaw) {
 
             const membersStr = members.map(m => `${m.formatted} — ${m.score}`).join(', ');
 let report = `[b]${time}, ${date}.[/b]\n`;
-report += `[b]Ходили:[/b] ${membersStr}\n`;
-report += `[b]Локация:[/b] ${location}`;
+report += `[b]Ходили:[/b] ${membersStr}.\n`;
+report += `[b]Локация:[/b] ${location}.`;
 report += carriersFormatted;
 
             insertReport(report);
