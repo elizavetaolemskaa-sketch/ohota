@@ -32,7 +32,7 @@ function addBackgroundStyle() {
     const style = document.createElement('style');
     style.textContent = `
         #hunt-helper-panel {
-            background-image: url('https://raw.githubusercontent.com/strushechka05-gif/veter/refs/heads/main/ohotfon.png');
+            background-image: url('https://e.radikal.host/2026/06/21/image80d7c346881d7002.png');
             background-repeat: repeat;
             background-position: top left;
         }
@@ -389,7 +389,7 @@ function createContestReportTab() {
     div.style.fontFamily = FONT_FAMILY;
 
     const currentDate = getTodayISO();
-    const types = ['Командное', 'Одиночное'];
+    const types = ['командное', 'одиночное'];
 
     div.innerHTML = `
         <div style="background-color: ${COLORS.bgTabActive}; padding: 4px; margin-bottom: 10px; font-weight: bold; text-align: center; color: ${COLORS.textDark};">Отпись охотничьего состязания</div>
@@ -605,7 +605,7 @@ function createContestReportTab() {
         }
 
         // Собираем отчёт
-        let report = `[b]${type}, ${date}.[/b]\n`;
+        let report = `[b]Вид охотничьего состязания: ${type}, ${date}.[/b]\n`;
         report += `[b]Победители:[/b] ${formattedWinners.join(', ')}\n`;
         report += `[b]Участники:[/b] ${formattedParticipants.join(', ')}`;
         report += carriersFormatted;
@@ -631,7 +631,7 @@ function createContestReportTab() {
         div.style.border = '1px solid ' + COLORS.border;
         div.style.fontFamily = FONT_FAMILY;
 
-        const types = ['Командное', 'Одиночное'];
+        const types = ['командное', 'одиночное'];
 
         div.innerHTML = `
             <div style="background-color: ${COLORS.bgTabActive}; padding: 4px; margin-bottom: 10px; font-weight: bold; text-align: center; color: ${COLORS.textDark};">Отмена охотничьего состязания</div>
@@ -663,7 +663,7 @@ function createContestReportTab() {
                 return;
             }
             const date = formatDateForReport(dateISO);
-            const report = `[b]${type}, ${date}.[/b]\n[b]Отмена.[/b]`;
+            const report = `[b]Вид охотничьего состязания: ${type}, ${date}.[/b]\n[b]Отмена.[/b]`;
             insertReport(report);
         };
 
