@@ -403,7 +403,7 @@ function createContestReportTab() {
     div.style.fontFamily = FONT_FAMILY;
 
     const currentDate = getTodayISO();
-    const types = ['командное', 'одиночное'];
+    const types = ['одиночное количественное', 'одиночное видовое', 'командное', 'делегационное'];
 
     div.innerHTML = `
         <div style="background-color: ${COLORS.bgTabActive}; padding: 4px; margin-bottom: 10px; font-weight: bold; text-align: center; color: ${COLORS.textDark};">Отпись охотничьего состязания</div>
@@ -645,7 +645,7 @@ function createContestReportTab() {
         div.style.border = '1px solid ' + COLORS.border;
         div.style.fontFamily = FONT_FAMILY;
 
-        const types = ['командное', 'одиночное'];
+        const types = ['одиночное количественное', 'одиночное видовое', 'командное', 'делегационное'];
 
         div.innerHTML = `
             <div style="background-color: ${COLORS.bgTabActive}; padding: 4px; margin-bottom: 10px; font-weight: bold; text-align: center; color: ${COLORS.textDark};">Отмена охотничьего состязания</div>
