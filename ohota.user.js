@@ -27,7 +27,7 @@
     const FONT_FAMILY = 'Georgia, serif';
 
     // ---------- ФОНОВЫЙ СТИЛЬ ----------
- 
+
 function addBackgroundStyle() {
     const style = document.createElement('style');
     style.textContent = `
@@ -155,10 +155,16 @@ function calculateScore(historyText) {
                 <span>Локация:</span>
                 <select id="patrol_location" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
                     <option value="Шумный поток">Шумный поток</option>
+                    <option value="Птичья пустошь">Птичья пустошь</option>
                     <option value="Чаща леса">Чаща леса</option>
                 </select>
                 <span>Носильщики:</span>
                 <input type="text" id="patrol_carriers" placeholder="Имя1, Имя2 (опционально)" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
+            </div>
+            <div style="margin-top: 6px;">
+                <label style="font-size: 13px;">
+                    <input type="checkbox" id="patrol_include_location" style="margin-right: 4px;"> Включать локацию в отчёт
+                </label>
             </div>
             <div style="margin-top: 10px;">
                 <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Участники (имя и история добычи):</div>
@@ -176,6 +182,7 @@ function calculateScore(historyText) {
         const dateInput = div.querySelector('#patrol_date');
         const locationSelect = div.querySelector('#patrol_location');
         const carriersInput = div.querySelector('#patrol_carriers');
+        const includeLocationCheck = div.querySelector('#patrol_include_location'); // новый чекбокс
 
         // Функция создания строки участника (имя + история)
         function createMemberRow(nameValue = '', historyValue = '') {
@@ -292,32 +299,39 @@ function calculateScore(historyText) {
             }
 
             // Проверяем носильщиков
-let carriersFormatted = '';
-const carriersRaw = carriersInput.value.trim();
-if (carriersRaw) {
-    const carrierNames = carriersRaw.split(',').map(s => s.trim()).filter(s => s);
-    const formattedCarriers = [];
-    for (const c of carrierNames) {
-        const formatted = await formatNameWithId(c);
-        if (formatted === null) {
-            showWarning(`Носильщик "${c}" не найден в системе!`);
-            return;
-        }
-        formattedCarriers.push(formatted);
-    }
-    carriersFormatted = `\n[b]Носильщики:[/b] ${formattedCarriers.join(', ')}.`;
-} else {
-    carriersFormatted = `\n[b]Носильщики:[/b] —.`;
-}
+            let carriersFormatted = '';
+            const carriersRaw = carriersInput.value.trim();
+            if (carriersRaw) {
+                const carrierNames = carriersRaw.split(',').map(s => s.trim()).filter(s => s);
+                const formattedCarriers = [];
+                for (const c of carrierNames) {
+                    const formatted = await formatNameWithId(c);
+                    if (formatted === null) {
+                        showWarning(`Носильщик "${c}" не найден в системе!`);
+                        return;
+                    }
+                    formattedCarriers.push(formatted);
+                }
+                carriersFormatted = `[b]Носильщики:[/b] ${formattedCarriers.join(', ')}.`;
+            } else {
+                carriersFormatted = `[b]Носильщики:[/b] —.`;
+            }
 
             const location = locationSelect.value;
+            const includeLocation = includeLocationCheck.checked; // состояние чекбокса
 
             const membersStr = members.map(m => `${m.formatted} — ${m.score}`).join(', ');
-let report = `[b]${time}, ${date}.[/b]\n`;
-report += `[b]Ходили:[/b] ${membersStr}.\n`;
-report += `[b]Локация:[/b] ${location}.`;
-report += carriersFormatted;
 
+            // Собираем отчёт в виде массива строк
+            const reportLines = [];
+            reportLines.push(`[b]${time}, ${date}.[/b]`);
+            reportLines.push(`[b]Ходили:[/b] ${membersStr}.`);
+            if (includeLocation) {
+                reportLines.push(`[b]Локация:[/b] ${location}.`);
+            }
+            reportLines.push(carriersFormatted);
+
+            const report = reportLines.join('\n');
             insertReport(report);
         };
 
@@ -607,7 +621,7 @@ function createContestReportTab() {
         // Собираем отчёт
         let report = `[b]Вид охотничьего состязания: ${type}, ${date}.[/b]\n`;
         report += `[b]Победители:[/b] ${formattedWinners.join(', ')}\n`;
-        report += `[b]Участники:[/b] ${formattedParticipants.join(', ')}`;
+        report += `[b]Участники:[/b] ${formattedParticipants.join(', ')}.`;
         report += carriersFormatted;
 
         insertReport(report);
@@ -677,7 +691,7 @@ function createContestReportTab() {
         panel.style.cssText = `border: 1px solid ${COLORS.border}; margin: 20px 0 10px 0; padding: 10px; font-family: ${FONT_FAMILY}; color: ${COLORS.textDark}; background-color: ${COLORS.bgMain};`;
 
         panel.innerHTML = `
-            <div class="panel-header" style="background-color: ${COLORS.bgTabActive}; padding: 8px 12px; margin: -10px -10px 10px -10px; font-size: 18px; font-weight: bold; text-align: center; color: ${COLORS.textDark};">Помощник охоты</div>
+            <div class="panel-header" style="background-color: ${COLORS.bgTabActive}; padding: 8px 12px; margin: -10px -10px 10px -10px; font-size: 18px; font-weight: bold; text-align: center; color: ${COLORS.textDark};">Охотничьи патрули</div>
             <div class="tab-bar" style="display: flex; border-bottom: 1px solid ${COLORS.border}; margin-bottom: 10px;">
                 <div class="hunt-tab-btn active" data-tab="patrol" style="padding: 6px 12px; background: ${COLORS.bgTabActive}; color: ${COLORS.textDark}; cursor: pointer; margin-right: 4px;">Отпись патруля</div>
                 <div class="hunt-tab-btn" data-tab="patrol_cancel" style="padding: 6px 12px; background: ${COLORS.bgTabInactive}; color: #D1AD88; cursor: pointer; margin-right: 4px;">Отмена патруля</div>
