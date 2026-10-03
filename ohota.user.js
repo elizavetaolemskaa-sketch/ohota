@@ -154,7 +154,7 @@
             savedLocations = [...DEFAULT_LOCATIONS];
         }
 
-        // Подсчёт количества дичи (шт.) по истории
+        // Подсчёт количества дичи по истории
         function calculateCount(historyText) {
             if (!historyText) return 0;
             const sentences = historyText.split(/[.!?]\s*/).filter(s => s.trim().length > 0);
@@ -230,7 +230,7 @@
                 <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Участники (история/количество добычи):</div>
                 <div id="patrol_members_container"></div>
                 <button id="patrol_add_member" style="margin-top: 5px; padding: 4px 10px; background: ${COLORS.bgTabActive}; border: none; cursor: pointer; font-family: ${FONT_FAMILY}; font-weight: bold;">✚ Добавить участника</button>
-                <div id="patrol_total" style="margin-top: 8px; padding: 8px 12px; background: rgba(255,255,255,0.35); border: 1px solid ${COLORS.border}; border-radius: 3px; font-size: 14px; font-weight: bold; text-align: right;">Всего дичи (шт): 0</div>
+                <div id="patrol_total" style="margin-top: 8px; padding: 8px 12px; background: rgba(255,255,255,0.35); border: 1px solid ${COLORS.border}; border-radius: 3px; font-size: 14px; font-weight: bold; text-align: right;">Всего дичи: 0</div>
             </div>
             <div id="patrol_warning" style="color: ${COLORS.warning}; font-size: 12px; margin-top: 8px; text-align: center; display: none;"></div>
             <button id="patrol_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgTabActive}; color:${COLORS.textDark}; border:none; cursor:pointer; font-family:${FONT_FAMILY}; font-weight:bold;">Сформировать отчёт</button>
@@ -360,7 +360,7 @@
                 if (!row._nameInput) continue;
                 total += computeMemberCount(row);
             }
-            totalDisplay.textContent = `Всего дичи (шт): ${total}`;
+            totalDisplay.textContent = `Всего дичи: ${total}`;
         }
 
         scoreThinInput.addEventListener('input', updateTotal);
