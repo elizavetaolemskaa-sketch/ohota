@@ -765,7 +765,7 @@
 
             let report = `[b]Вид охотничьего состязания: ${type}, ${date}.[/b]\n`;
             report += `[b]Победители:[/b] ${formattedWinners.join(', ')}\n`;
-            report += `[b]Участники:[/b] ${formattedParticipants.join(', ')}`;
+            report += `[b]Участники:[/b] ${formattedParticipants.join(', ')}.`;
             report += carriersFormatted;
             report += infoFormatted;
 
