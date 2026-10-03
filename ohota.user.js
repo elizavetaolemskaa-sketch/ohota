@@ -132,7 +132,7 @@
         }
     }
 
-    // ---------- ВКЛАДКА 1: Отпись охотничьего патруля ----------
+   // ---------- ВКЛАДКА 1: Отпись охотничьего патруля ----------
     function createPatrolReportTab() {
         const div = document.createElement('div');
         div.style.display = 'block';
@@ -143,24 +143,41 @@
         div.style.fontFamily = FONT_FAMILY;
 
         const times = ['Дневной', 'Послеполуденный', 'Вечерний'];
+        const DEFAULT_LOCATIONS = ['Шумный поток', 'Чаща леса'];
+
+        // Загружаем сохранённые локации из localStorage
+        let savedLocations = [];
+        try {
+            const stored = JSON.parse(localStorage.getItem('patrol_locations'));
+            if (Array.isArray(stored) && stored.length > 0) savedLocations = stored;
+            else savedLocations = [...DEFAULT_LOCATIONS];
+        } catch (e) {
+            savedLocations = [...DEFAULT_LOCATIONS];
+        }
 
         div.innerHTML = `
             <div style="background-color: ${COLORS.bgTabActive}; padding: 4px; margin-bottom: 10px; font-weight: bold; text-align: center; color: ${COLORS.textDark};">Отпись охотничьего патруля</div>
-            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center; font-size: 13px;">
-                <span>Время:</span>
+            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: start; font-size: 13px;">
+                <span style="padding-top: 6px;">Время:</span>
                 <select id="patrol_time" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
                     ${times.map(t => `<option value="${t}">${t}</option>`).join('')}
                 </select>
-                <span>Дата:</span>
+                <span style="padding-top: 6px;">Дата:</span>
                 <input type="date" id="patrol_date" value="${getTodayISO()}" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
-                <span>Локация:</span>
-                <select id="patrol_location" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
-                    <option value="Шумный поток">Шумный поток</option>
-                    <option value="Чаща леса">Чаща леса</option>
-                </select>
-                <span>Носильщики:</span>
+                <span style="padding-top: 6px;">Локация:</span>
+                <div>
+                    <div style="display: flex; gap: 4px;">
+                        <select id="patrol_location" style="flex: 1; padding: 4px; font-family: ${FONT_FAMILY};"></select>
+                        <button type="button" id="patrol_location_del" title="Удалить выбранную локацию" style="background: #2E1A02; color: white; border: none; border-radius: 3px; cursor: pointer; padding: 2px 8px; font-size: 12px;">✕</button>
+                    </div>
+                    <div style="display: flex; gap: 4px; margin-top: 4px;">
+                        <input type="text" id="patrol_new_location" placeholder="Новая локация" style="flex: 1; padding: 4px; font-family: ${FONT_FAMILY};">
+                        <button type="button" id="patrol_location_add" title="Добавить локацию" style="background: ${COLORS.bgTabActive}; border: none; cursor: pointer; padding: 4px 10px; font-family: ${FONT_FAMILY}; font-weight: bold;">✚</button>
+                    </div>
+                </div>
+                <span style="padding-top: 6px;">Носильщики:</span>
                 <input type="text" id="patrol_carriers" placeholder="Имя1, Имя2 (опционально)" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
-                <span>Инофракционные:</span>
+                <span style="padding-top: 6px;">Информационные:</span>
                 <input type="text" id="patrol_info" placeholder="Имя1, Имя2 (опционально)" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
             </div>
             <div style="margin-top: 6px;">
@@ -170,12 +187,12 @@
             </div>
             <div style="margin-top: 6px;">
                 <label style="font-size: 13px;">
-                    <input type="checkbox" id="patrol_include_info" style="margin-right: 4px;"> Включать инофракционных игроков в отчёт
+                    <input type="checkbox" id="patrol_include_info" style="margin-right: 4px;"> Включать информационные в отчёт
                 </label>
             </div>
 
             <details style="margin-top: 10px; background: rgba(255,255,255,0.2); padding: 6px 8px; border: 1px solid ${COLORS.border};">
-                <summary style="cursor: pointer; font-weight: bold; font-size: 13px;"> Настройка баллов</summary>
+                <summary style="cursor: pointer; font-weight: bold; font-size: 13px;">⚙ Настройки баллов</summary>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; font-size: 13px;">
                     <label style="display: flex; flex-direction: column; gap: 4px;">
                         Хилая
@@ -208,6 +225,9 @@
         const timeSelect = div.querySelector('#patrol_time');
         const dateInput = div.querySelector('#patrol_date');
         const locationSelect = div.querySelector('#patrol_location');
+        const newLocationInput = div.querySelector('#patrol_new_location');
+        const addLocationBtn = div.querySelector('#patrol_location_add');
+        const delLocationBtn = div.querySelector('#patrol_location_del');
         const carriersInput = div.querySelector('#patrol_carriers');
         const infoInput = div.querySelector('#patrol_info');
         const includeLocationCheck = div.querySelector('#patrol_include_location');
@@ -219,6 +239,63 @@
         const scoreFatInput = div.querySelector('#score_fat');
         const scoreResetBtn = div.querySelector('#score_reset');
 
+        // ---------- ЛОКАЦИИ ----------
+        function renderLocations() {
+            const current = locationSelect.value;
+            locationSelect.innerHTML = '';
+            savedLocations.forEach(loc => {
+                const opt = document.createElement('option');
+                opt.value = loc;
+                opt.textContent = loc;
+                locationSelect.appendChild(opt);
+            });
+            // Восстанавливаем выбор, если он ещё существует
+            if (savedLocations.includes(current)) {
+                locationSelect.value = current;
+            }
+        }
+
+        function saveLocations() {
+            localStorage.setItem('patrol_locations', JSON.stringify(savedLocations));
+        }
+
+        renderLocations();
+
+        addLocationBtn.onclick = () => {
+            const name = newLocationInput.value.trim();
+            if (!name) { newLocationInput.focus(); return; }
+            if (savedLocations.includes(name)) {
+                alert('Такая локация уже есть в списке!');
+                return;
+            }
+            savedLocations.push(name);
+            saveLocations();
+            renderLocations();
+            locationSelect.value = name;
+            newLocationInput.value = '';
+        };
+
+        // Добавление по Enter
+        newLocationInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addLocationBtn.click();
+            }
+        });
+
+        delLocationBtn.onclick = () => {
+            if (savedLocations.length <= 1) {
+                alert('Должна остаться хотя бы одна локация.');
+                return;
+            }
+            const current = locationSelect.value;
+            if (!confirm(`Удалить локацию "${current}"?`)) return;
+            savedLocations = savedLocations.filter(l => l !== current);
+            saveLocations();
+            renderLocations();
+        };
+
+        // ---------- НАСТРОЙКИ БАЛЛОВ ----------
         scoreResetBtn.onclick = () => {
             scoreThinInput.value = 1;
             scoreNormalInput.value = 2;
@@ -369,7 +446,7 @@
             const includeLocation = includeLocationCheck.checked;
             const includeInfo = includeInfoCheck.checked;
 
-            // Инофракционные
+            // Информационные (с ID)
             let infoFormatted = '';
             if (includeInfo) {
                 const infoRaw = infoInput.value.trim();
@@ -384,9 +461,9 @@
                         }
                         formattedInfo.push(formatted);
                     }
-                    infoFormatted = `[b]Инофракционные:[/b] ${formattedInfo.join(', ')}.`;
+                    infoFormatted = `[b]Информационные:[/b] ${formattedInfo.join(', ')}.`;
                 } else {
-                    infoFormatted = `[b]Инофракционные:[/b] —.`;
+                    infoFormatted = `[b]Информационные:[/b] —.`;
                 }
             }
 
