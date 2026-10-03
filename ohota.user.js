@@ -143,7 +143,7 @@
         div.style.fontFamily = FONT_FAMILY;
 
         const times = ['Дневной', 'Послеполуденный', 'Вечерний'];
-        const DEFAULT_LOCATIONS = ['Шумный поток', 'Чаща леса'];
+        const DEFAULT_LOCATIONS = ['Шумный поток'];
 
         // Загружаем сохранённые локации из localStorage
         let savedLocations = [];
