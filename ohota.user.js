@@ -192,7 +192,7 @@
             </div>
 
             <details style="margin-top: 10px; background: rgba(255,255,255,0.2); padding: 6px 8px; border: 1px solid ${COLORS.border};">
-                <summary style="cursor: pointer; font-weight: bold; font-size: 13px;">⚙ Настройки баллов</summary>
+                <summary style="cursor: pointer; font-weight: bold; font-size: 13px;"> Настройка баллов</summary>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; font-size: 13px;">
                     <label style="display: flex; flex-direction: column; gap: 4px;">
                         Хилая
