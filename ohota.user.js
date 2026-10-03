@@ -132,7 +132,7 @@
         }
     }
 
-   // ---------- ВКЛАДКА 1: Отпись охотничьего патруля ----------
+    // ---------- ВКЛАДКА 1: Отпись охотничьего патруля ----------
     function createPatrolReportTab() {
         const div = document.createElement('div');
         div.style.display = 'block';
@@ -143,9 +143,8 @@
         div.style.fontFamily = FONT_FAMILY;
 
         const times = ['Дневной', 'Послеполуденный', 'Вечерний'];
-        const DEFAULT_LOCATIONS = ['Шумный поток'];
+        const DEFAULT_LOCATIONS = ['Шумный поток', 'Чаща леса'];
 
-        // Загружаем сохранённые локации из localStorage
         let savedLocations = [];
         try {
             const stored = JSON.parse(localStorage.getItem('patrol_locations'));
@@ -153,6 +152,23 @@
             else savedLocations = [...DEFAULT_LOCATIONS];
         } catch (e) {
             savedLocations = [...DEFAULT_LOCATIONS];
+        }
+
+        // Подсчёт количества дичи (шт.) по истории
+        function calculateCount(historyText) {
+            if (!historyText) return 0;
+            const sentences = historyText.split(/[.!?]\s*/).filter(s => s.trim().length > 0);
+            let total = 0;
+            for (const sentence of sentences) {
+                if (/(поднял[а]?)/i.test(sentence)) {
+                    const regex = /(упитанн\S*|обычн\S*|хил\S*)\s+(\S+)/gi;
+                    let match;
+                    while ((match = regex.exec(sentence)) !== null) {
+                        total += 1;
+                    }
+                }
+            }
+            return total;
         }
 
         div.innerHTML = `
@@ -211,9 +227,10 @@
             </details>
 
             <div style="margin-top: 10px;">
-                <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Участники (имя и история добычи):</div>
+                <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Участники (история/количество добычи):</div>
                 <div id="patrol_members_container"></div>
                 <button id="patrol_add_member" style="margin-top: 5px; padding: 4px 10px; background: ${COLORS.bgTabActive}; border: none; cursor: pointer; font-family: ${FONT_FAMILY}; font-weight: bold;">✚ Добавить участника</button>
+                <div id="patrol_total" style="margin-top: 8px; padding: 8px 12px; background: rgba(255,255,255,0.35); border: 1px solid ${COLORS.border}; border-radius: 3px; font-size: 14px; font-weight: bold; text-align: right;">Всего дичи (шт): 0</div>
             </div>
             <div id="patrol_warning" style="color: ${COLORS.warning}; font-size: 12px; margin-top: 8px; text-align: center; display: none;"></div>
             <button id="patrol_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgTabActive}; color:${COLORS.textDark}; border:none; cursor:pointer; font-family:${FONT_FAMILY}; font-weight:bold;">Сформировать отчёт</button>
@@ -232,8 +249,8 @@
         const infoInput = div.querySelector('#patrol_info');
         const includeLocationCheck = div.querySelector('#patrol_include_location');
         const includeInfoCheck = div.querySelector('#patrol_include_info');
+        const totalDisplay = div.querySelector('#patrol_total');
 
-        // Элементы настроек баллов
         const scoreThinInput = div.querySelector('#score_thin');
         const scoreNormalInput = div.querySelector('#score_normal');
         const scoreFatInput = div.querySelector('#score_fat');
@@ -249,7 +266,6 @@
                 opt.textContent = loc;
                 locationSelect.appendChild(opt);
             });
-            // Восстанавливаем выбор, если он ещё существует
             if (savedLocations.includes(current)) {
                 locationSelect.value = current;
             }
@@ -275,7 +291,6 @@
             newLocationInput.value = '';
         };
 
-        // Добавление по Enter
         newLocationInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -300,6 +315,7 @@
             scoreThinInput.value = 1;
             scoreNormalInput.value = 2;
             scoreFatInput.value = 4;
+            updateTotal();
         };
 
         function getWeights() {
@@ -314,30 +330,144 @@
             };
         }
 
+        function computeMemberScore(row, weights) {
+            if (row.dataset.mode === 'count') {
+                const thin = parseInt(row._thinInput.value, 10) || 0;
+                const normal = parseInt(row._normalInput.value, 10) || 0;
+                const fat = parseInt(row._fatInput.value, 10) || 0;
+                return thin * weights.thin + normal * weights.normal + fat * weights.fat;
+            } else if (row.dataset.mode === 'history') {
+                return calculateScore(row._historyInput.value.trim(), weights);
+            }
+            return 0;
+        }
+
+        function computeMemberCount(row) {
+            if (row.dataset.mode === 'count') {
+                const thin = parseInt(row._thinInput.value, 10) || 0;
+                const normal = parseInt(row._normalInput.value, 10) || 0;
+                const fat = parseInt(row._fatInput.value, 10) || 0;
+                return thin + normal + fat;
+            } else if (row.dataset.mode === 'history') {
+                return calculateCount(row._historyInput.value.trim());
+            }
+            return 0;
+        }
+
+        function updateTotal() {
+            let total = 0;
+            for (const row of container.children) {
+                if (!row._nameInput) continue;
+                total += computeMemberCount(row);
+            }
+            totalDisplay.textContent = `Всего дичи (шт): ${total}`;
+        }
+
+        scoreThinInput.addEventListener('input', updateTotal);
+        scoreNormalInput.addEventListener('input', updateTotal);
+        scoreFatInput.addEventListener('input', updateTotal);
+
+        // ---------- СТРОКА УЧАСТНИКА ----------
         function createMemberRow(nameValue = '', historyValue = '') {
             const row = document.createElement('div');
-            row.style.display = 'flex';
+            // Грид: [Имя] [Кнопки] [Контент] [Удалить]
+            row.style.display = 'grid';
+            row.style.gridTemplateColumns = '160px max-content 1fr max-content';
             row.style.gap = '8px';
-            row.style.marginBottom = '5px';
-            row.style.alignItems = 'flex-start';
+            row.style.alignItems = 'flex-start';   // ← всё прижато к верху
+            row.style.marginBottom = '8px';
 
+            // Имя
             const nameInput = document.createElement('input');
             nameInput.type = 'text';
             nameInput.placeholder = 'Имя';
             nameInput.value = nameValue;
-            nameInput.style.flex = '0 0 150px';
-            nameInput.style.padding = '4px';
+            nameInput.style.width = '100%';
+            nameInput.style.padding = '8px';
             nameInput.style.fontFamily = FONT_FAMILY;
+            nameInput.style.fontSize = '13px';
+            nameInput.style.boxSizing = 'border-box';
 
+            // Кнопки-переключатели
+            const toggleWrap = document.createElement('div');
+            toggleWrap.style.display = 'flex';
+            toggleWrap.style.gap = '3px';
+
+            const histBtn = document.createElement('button');
+            histBtn.type = 'button';
+            histBtn.textContent = 'История';
+            histBtn.style.cssText = `padding: 8px 12px; border: 1px solid ${COLORS.border}; cursor: pointer; font-family: ${FONT_FAMILY}; font-size: 12px; background: ${COLORS.bgTabInactive}; color: ${COLORS.textDark}; white-space: nowrap;`;
+
+            const countBtn = document.createElement('button');
+            countBtn.type = 'button';
+            countBtn.textContent = 'Количество';
+            countBtn.style.cssText = `padding: 8px 12px; border: 1px solid ${COLORS.border}; cursor: pointer; font-family: ${FONT_FAMILY}; font-size: 12px; background: ${COLORS.bgTabInactive}; color: ${COLORS.textDark}; white-space: nowrap;`;
+
+            toggleWrap.appendChild(histBtn);
+            toggleWrap.appendChild(countBtn);
+
+            // Контейнер с раскрывающимися полями
+            const contentWrap = document.createElement('div');
+            contentWrap.style.width = '100%';
+
+            // История
             const historyInput = document.createElement('textarea');
             historyInput.placeholder = 'Поднял(а) с земли хилого/обычного/упитанного зайца';
             historyInput.value = historyValue;
-            historyInput.style.flex = '1';
-            historyInput.style.padding = '4px';
+            historyInput.style.width = '100%';
+            historyInput.style.padding = '8px';
             historyInput.style.fontFamily = FONT_FAMILY;
-            historyInput.style.height = '40px';
+            historyInput.style.fontSize = '13px';
+            historyInput.style.minHeight = '90px';
+            historyInput.style.height = '90px';
             historyInput.style.resize = 'vertical';
+            historyInput.style.boxSizing = 'border-box';
+            historyInput.style.display = 'none';
 
+            // Количество
+            const countWrap = document.createElement('div');
+            countWrap.style.display = 'none';
+            countWrap.style.gap = '16px';
+            countWrap.style.alignItems = 'center';
+            countWrap.style.flexWrap = 'wrap';
+
+            function makeCountField(label) {
+                const wrap = document.createElement('label');
+                wrap.style.display = 'flex';
+                wrap.style.flexDirection = 'row';
+                wrap.style.alignItems = 'center';
+                wrap.style.gap = '6px';
+                wrap.style.fontSize = '12px';
+                wrap.style.whiteSpace = 'nowrap';
+                const span = document.createElement('span');
+                span.textContent = label;
+                const inp = document.createElement('input');
+                inp.type = 'number';
+                inp.min = '0';
+                inp.step = '1';
+                inp.value = 0;
+                inp.style.width = '70px';
+                inp.style.padding = '7px 8px';
+                inp.style.fontFamily = FONT_FAMILY;
+                inp.style.fontSize = '13px';
+                inp.style.boxSizing = 'border-box';
+                wrap.appendChild(span);
+                wrap.appendChild(inp);
+                return { wrap, inp };
+            }
+
+            const thinField = makeCountField('Хилая');
+            const normalField = makeCountField('Обычная');
+            const fatField = makeCountField('Упитанная');
+
+            countWrap.appendChild(thinField.wrap);
+            countWrap.appendChild(normalField.wrap);
+            countWrap.appendChild(fatField.wrap);
+
+            contentWrap.appendChild(historyInput);
+            contentWrap.appendChild(countWrap);
+
+            // Удалить
             const removeBtn = document.createElement('button');
             removeBtn.textContent = '✕';
             removeBtn.style.background = '#2E1A02';
@@ -345,21 +475,64 @@
             removeBtn.style.border = 'none';
             removeBtn.style.borderRadius = '3px';
             removeBtn.style.cursor = 'pointer';
-            removeBtn.style.padding = '2px 6px';
+            removeBtn.style.padding = '8px 10px';
             removeBtn.style.fontSize = '12px';
             removeBtn.style.alignSelf = 'center';
             removeBtn.title = 'Удалить участника';
 
             row.appendChild(nameInput);
-            row.appendChild(historyInput);
+            row.appendChild(toggleWrap);
+            row.appendChild(contentWrap);
             row.appendChild(removeBtn);
+
+            row._nameInput = nameInput;
+            row._historyInput = historyInput;
+            row._thinInput = thinField.inp;
+            row._normalInput = normalField.inp;
+            row._fatInput = fatField.inp;
+
+            function setMode(mode) {
+                if (row.dataset.mode === mode) {
+                    mode = 'none';
+                }
+                row.dataset.mode = mode;
+
+                historyInput.style.display = 'none';
+                countWrap.style.display = 'none';
+                histBtn.style.background = COLORS.bgTabInactive;
+                countBtn.style.background = COLORS.bgTabInactive;
+
+                if (mode === 'history') {
+                    historyInput.style.display = 'block';
+                    histBtn.style.background = COLORS.bgTabActive;
+                } else if (mode === 'count') {
+                    countWrap.style.display = 'flex';
+                    countBtn.style.background = COLORS.bgTabActive;
+                }
+                updateTotal();
+            }
+
+            histBtn.onclick = () => setMode('history');
+            countBtn.onclick = () => setMode('count');
+
+            nameInput.addEventListener('input', updateTotal);
+            historyInput.addEventListener('input', updateTotal);
+            thinField.inp.addEventListener('input', updateTotal);
+            normalField.inp.addEventListener('input', updateTotal);
+            fatField.inp.addEventListener('input', updateTotal);
 
             removeBtn.onclick = () => {
                 if (container.children.length > 1) {
                     row.remove();
+                    updateTotal();
                 } else {
                     nameInput.value = '';
                     historyInput.value = '';
+                    thinField.inp.value = 0;
+                    normalField.inp.value = 0;
+                    fatField.inp.value = 0;
+                    setMode('none');
+                    updateTotal();
                 }
             };
 
@@ -369,11 +542,14 @@
         for (let i = 0; i < 3; i++) {
             container.appendChild(createMemberRow());
         }
+        updateTotal();
 
         addBtn.onclick = () => {
             container.appendChild(createMemberRow());
+            updateTotal();
         };
 
+        // ---------- ФОРМИРОВАНИЕ ОТЧЁТА ----------
         div.querySelector('#patrol_submit').onclick = async (e) => {
             e.preventDefault();
             warningDiv.style.display = 'none';
@@ -385,19 +561,31 @@
 
             const weights = getWeights();
 
-            const rows = container.querySelectorAll('div');
             const members = [];
             let hasError = false;
 
-            for (const row of rows) {
-                const nameInput = row.querySelector('input[placeholder="Имя"]');
-                const historyInput = row.querySelector('textarea');
-                if (!nameInput || !historyInput) continue;
+            for (const row of container.children) {
+                if (!row._nameInput) continue;
 
-                const name = nameInput.value.trim();
-                const history = historyInput.value.trim();
+                const name = row._nameInput.value.trim();
+                const mode = row.dataset.mode;
 
-                if (!name && !history) continue;
+                let score = 0;
+                let hasContent = false;
+
+                if (mode === 'count') {
+                    const thin = parseInt(row._thinInput.value, 10) || 0;
+                    const normal = parseInt(row._normalInput.value, 10) || 0;
+                    const fat = parseInt(row._fatInput.value, 10) || 0;
+                    hasContent = (thin + normal + fat) > 0;
+                    score = thin * weights.thin + normal * weights.normal + fat * weights.fat;
+                } else if (mode === 'history') {
+                    const history = row._historyInput.value.trim();
+                    hasContent = !!history;
+                    score = calculateScore(history, weights);
+                }
+
+                if (!name && !hasContent) continue;
 
                 if (!name) {
                     showWarning('Имя не может быть пустым.');
@@ -412,7 +600,6 @@
                     break;
                 }
 
-                const score = calculateScore(history, weights);
                 members.push({ formatted, score });
             }
 
