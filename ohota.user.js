@@ -2,7 +2,7 @@
 // @name         охота халоо
 // @namespace    http://tampermonkey.net/
 // @version      2026-06-20
-// @description  try to take over the world!
+// @description  охоточка боже как я тебя лав
 // @author       миви как обычно feat дипсик
 // @match        https://catwar.su/blog5504
 // @match        https://catwar.net/blog5504
