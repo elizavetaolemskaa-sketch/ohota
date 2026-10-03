@@ -501,7 +501,7 @@
                 <input type="text" id="contest_carriers" placeholder="Имя1, Имя2 (опционально)" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
             </div>
             <div id="contest_info_block" style="margin-top: 10px; display: none;">
-                <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Информационные:</div>
+                <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Инофракционные:</div>
                 <input type="text" id="contest_info" placeholder="Имя1, Имя2 (опционально)" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
             </div>
             <div id="contest_warning" style="color: ${COLORS.warning}; font-size: 12px; margin-top: 8px; text-align: center; display: none;"></div>
@@ -582,7 +582,7 @@
             infoCheckbox.style.accentColor = '#2E1A02';
 
             infoLabel.appendChild(infoCheckbox);
-            infoLabel.appendChild(document.createTextNode('информационный'));
+            infoLabel.appendChild(document.createTextNode('инофракционный'));
 
             const removeBtn = document.createElement('button');
             removeBtn.textContent = '✕';
@@ -616,11 +616,11 @@
             return row;
         }
 
-        // Обновление видимости чекбоксов "информационный" и поля "Информационные"
+        // 
         function updateDelegationVisibility() {
             const isDelegation = typeSelect.value === 'делегационное';
 
-            // Чекбоксы "информационный" у победителей
+            // Чекбоксы "инофракционный" у победителей
             const rows = winnersContainer.querySelectorAll('div');
             rows.forEach(row => {
                 if (row._infoLabel) {
@@ -628,7 +628,7 @@
                 }
             });
 
-            // Блок "Информационные"
+            // Блок Инофракционные
             infoBlock.style.display = isDelegation ? 'block' : 'none';
         }
 
@@ -742,7 +742,7 @@
                 carriersFormatted = `\n[b]Носильщики:[/b] —.`;
             }
 
-            // Информационные — только для делегационного, с ID
+            // Инофракционные
             let infoFormatted = '';
             if (isDelegation) {
                 const infoRaw = infoInput.value.trim();
@@ -757,9 +757,9 @@
                         }
                         formattedInfo.push(formatted);
                     }
-                    infoFormatted = `\n[b]Информационные:[/b] ${formattedInfo.join(', ')}.`;
+                    infoFormatted = `\n[b]Инофракционные:[/b] ${formattedInfo.join(', ')}.`;
                 } else {
-                    infoFormatted = `\n[b]Информационные:[/b] —.`;
+                    infoFormatted = `\n[b]Инофракционные:[/b] —.`;
                 }
             }
 
