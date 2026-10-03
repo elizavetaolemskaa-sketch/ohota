@@ -27,21 +27,23 @@
     const FONT_FAMILY = 'Georgia, serif';
 
     // ---------- ФОНОВЫЙ СТИЛЬ ----------
-
-function addBackgroundStyle() {
-    const style = document.createElement('style');
-    style.textContent = `
-        #hunt-helper-panel {
-            background-image: url('https://e.radikal.host/2026/06/21/image80d7c346881d7002.png');
-            background-repeat: repeat;
-            background-position: top left;
-        }
-        #hunt-helper-panel input[type="radio"] {
-            accent-color: #2E1A02;
-        }
-    `;
-    document.head.appendChild(style);
-}
+    function addBackgroundStyle() {
+        const style = document.createElement('style');
+        style.textContent = `
+            #hunt-helper-panel {
+                background-image: url('https://e.radikal.host/2026/06/21/image80d7c346881d7002.png');
+                background-repeat: repeat;
+                background-position: top left;
+            }
+            #hunt-helper-panel input[type="radio"] {
+                accent-color: #2E1A02;
+            }
+            #hunt-helper-panel input[type="checkbox"] {
+                accent-color: #2E1A02;
+            }
+        `;
+        document.head.appendChild(style);
+    }
 
     // ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
     function getTodayISO() {
@@ -100,27 +102,25 @@ function addBackgroundStyle() {
     }
 
     // Подсчёт баллов по истории
-function calculateScore(historyText) {
-    if (!historyText) return 0;
-    const text = historyText;
-    // Разбиваем на предложения по . ! ? и другим разделителям
-    const sentences = text.split(/[.!?]\s*/).filter(s => s.trim().length > 0);
-    let totalScore = 0;
-    for (const sentence of sentences) {
-        if (/(поднял[а]?)/i.test(sentence)) {
-            // Ищем прилагательные в этом предложении
-            const regex = /(упитанн\S*|обычн\S*|хил\S*)\s+(\S+)/gi;
-            let match;
-            while ((match = regex.exec(sentence)) !== null) {
-                const adj = match[1];
-                if (adj.includes('упитанн')) totalScore += 4;
-                else if (adj.includes('обычн')) totalScore += 2;
-                else if (adj.includes('хил')) totalScore += 1;
+    function calculateScore(historyText) {
+        if (!historyText) return 0;
+        const text = historyText;
+        const sentences = text.split(/[.!?]\s*/).filter(s => s.trim().length > 0);
+        let totalScore = 0;
+        for (const sentence of sentences) {
+            if (/(поднял[а]?)/i.test(sentence)) {
+                const regex = /(упитанн\S*|обычн\S*|хил\S*)\s+(\S+)/gi;
+                let match;
+                while ((match = regex.exec(sentence)) !== null) {
+                    const adj = match[1];
+                    if (adj.includes('упитанн')) totalScore += 4;
+                    else if (adj.includes('обычн')) totalScore += 2;
+                    else if (adj.includes('хил')) totalScore += 1;
+                }
             }
         }
+        return totalScore;
     }
-    return totalScore;
-}
 
     function insertReport(text) {
         const field = document.querySelector('#comment');
@@ -131,7 +131,7 @@ function calculateScore(historyText) {
         }
     }
 
-    // ---------- ВКЛАДКА 1: Отпись охотничьего патруля (с историей) ----------
+  // ---------- ВКЛАДКА 1: Отпись охотничьего патруля ----------
     function createPatrolReportTab() {
         const div = document.createElement('div');
         div.style.display = 'block';
@@ -155,15 +155,21 @@ function calculateScore(historyText) {
                 <span>Локация:</span>
                 <select id="patrol_location" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
                     <option value="Шумный поток">Шумный поток</option>
-                    <option value="Птичья пустошь">Птичья пустошь</option>
                     <option value="Чаща леса">Чаща леса</option>
                 </select>
                 <span>Носильщики:</span>
                 <input type="text" id="patrol_carriers" placeholder="Имя1, Имя2 (опционально)" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
+                <span>Инофракционные:</span>
+                <input type="text" id="patrol_info" placeholder="Имя1, Имя2 (опционально)" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
             </div>
             <div style="margin-top: 6px;">
                 <label style="font-size: 13px;">
                     <input type="checkbox" id="patrol_include_location" style="margin-right: 4px;"> Включать локацию в отчёт
+                </label>
+            </div>
+            <div style="margin-top: 6px;">
+                <label style="font-size: 13px;">
+                    <input type="checkbox" id="patrol_include_info" style="margin-right: 4px;"> Включать инофракционных игроков в отчёт
                 </label>
             </div>
             <div style="margin-top: 10px;">
@@ -182,9 +188,10 @@ function calculateScore(historyText) {
         const dateInput = div.querySelector('#patrol_date');
         const locationSelect = div.querySelector('#patrol_location');
         const carriersInput = div.querySelector('#patrol_carriers');
-        const includeLocationCheck = div.querySelector('#patrol_include_location'); // новый чекбокс
+        const infoInput = div.querySelector('#patrol_info');
+        const includeLocationCheck = div.querySelector('#patrol_include_location');
+        const includeInfoCheck = div.querySelector('#patrol_include_info');
 
-        // Функция создания строки участника (имя + история)
         function createMemberRow(nameValue = '', historyValue = '') {
             const row = document.createElement('div');
             row.style.display = 'flex';
@@ -237,7 +244,6 @@ function calculateScore(historyText) {
             return row;
         }
 
-        // Инициализация: три пустые строки
         for (let i = 0; i < 3; i++) {
             container.appendChild(createMemberRow());
         }
@@ -246,7 +252,6 @@ function calculateScore(historyText) {
             container.appendChild(createMemberRow());
         };
 
-        // Обработчик кнопки "Сформировать отчёт"
         div.querySelector('#patrol_submit').onclick = async (e) => {
             e.preventDefault();
             warningDiv.style.display = 'none';
@@ -268,7 +273,6 @@ function calculateScore(historyText) {
                 const name = nameInput.value.trim();
                 const history = historyInput.value.trim();
 
-                // Пропускаем строки, где оба поля пустые
                 if (!name && !history) continue;
 
                 if (!name) {
@@ -277,7 +281,6 @@ function calculateScore(historyText) {
                     break;
                 }
 
-                // Проверяем имя через API
                 const formatted = await formatNameWithId(name);
                 if (formatted === null) {
                     showWarning(`Игрок "${name}" не найден в системе! Проверьте имя.`);
@@ -285,9 +288,7 @@ function calculateScore(historyText) {
                     break;
                 }
 
-                // Подсчитываем баллы по истории
                 const score = calculateScore(history);
-
                 members.push({ formatted, score });
             }
 
@@ -298,7 +299,7 @@ function calculateScore(historyText) {
                 return;
             }
 
-            // Проверяем носильщиков
+            // Носильщики
             let carriersFormatted = '';
             const carriersRaw = carriersInput.value.trim();
             if (carriersRaw) {
@@ -318,11 +319,32 @@ function calculateScore(historyText) {
             }
 
             const location = locationSelect.value;
-            const includeLocation = includeLocationCheck.checked; // состояние чекбокса
+            const includeLocation = includeLocationCheck.checked;
+            const includeInfo = includeInfoCheck.checked;
+
+            // Инофракционные
+            let infoFormatted = '';
+            if (includeInfo) {
+                const infoRaw = infoInput.value.trim();
+                if (infoRaw) {
+                    const infoNames = infoRaw.split(',').map(s => s.trim()).filter(s => s);
+                    const formattedInfo = [];
+                    for (const n of infoNames) {
+                        const formatted = await formatNameWithId(n);
+                        if (formatted === null) {
+                            showWarning(`Игрок "${n}" не найден в системе!`);
+                            return;
+                        }
+                        formattedInfo.push(formatted);
+                    }
+                    infoFormatted = `[b]Инофракционные:[/b] ${formattedInfo.join(', ')}.`;
+                } else {
+                    infoFormatted = `[b]Инофракционные:[/b] —.`;
+                }
+            }
 
             const membersStr = members.map(m => `${m.formatted} — ${m.score}`).join(', ');
 
-            // Собираем отчёт в виде массива строк
             const reportLines = [];
             reportLines.push(`[b]${time}, ${date}.[/b]`);
             reportLines.push(`[b]Ходили:[/b] ${membersStr}.`);
@@ -330,6 +352,9 @@ function calculateScore(historyText) {
                 reportLines.push(`[b]Локация:[/b] ${location}.`);
             }
             reportLines.push(carriersFormatted);
+            if (includeInfo) {
+                reportLines.push(infoFormatted);
+            }
 
             const report = reportLines.join('\n');
             insertReport(report);
@@ -343,7 +368,7 @@ function calculateScore(historyText) {
         return div;
     }
 
-    // ---------- ВКЛАДКА 2: Отмена охотничьего патруля (без изменений) ----------
+    // ---------- ВКЛАДКА 2: Отмена охотничьего патруля ----------
     function createPatrolCancelTab() {
         const div = document.createElement('div');
         div.style.display = 'none';
@@ -392,250 +417,314 @@ function calculateScore(historyText) {
         return div;
     }
 
-    // ---------- ВКЛАДКА 3: Отпись охотничьего состязания (без изменений) ----------
-function createContestReportTab() {
-    const div = document.createElement('div');
-    div.style.display = 'none';
-    div.style.marginBottom = '15px';
-    div.style.padding = '10px';
-    div.style.backgroundColor = COLORS.bgMain;
-    div.style.border = '1px solid ' + COLORS.border;
-    div.style.fontFamily = FONT_FAMILY;
+    // ---------- ВКЛАДКА 3: Отпись охотничьего состязания ----------
+    // ---------- ВКЛАДКА 3: Отпись охотничьего состязания ----------
+    function createContestReportTab() {
+        const div = document.createElement('div');
+        div.style.display = 'none';
+        div.style.marginBottom = '15px';
+        div.style.padding = '10px';
+        div.style.backgroundColor = COLORS.bgMain;
+        div.style.border = '1px solid ' + COLORS.border;
+        div.style.fontFamily = FONT_FAMILY;
 
-    const currentDate = getTodayISO();
-    const types = ['одиночное количественное', 'одиночное видовое', 'командное', 'делегационное'];
+        const currentDate = getTodayISO();
+        const types = ['командное', 'одиночное', 'делегационное'];
 
-    div.innerHTML = `
-        <div style="background-color: ${COLORS.bgTabActive}; padding: 4px; margin-bottom: 10px; font-weight: bold; text-align: center; color: ${COLORS.textDark};">Отпись охотничьего состязания</div>
-        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center; font-size: 13px;">
-            <span>Вид:</span>
-            <select id="contest_type" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
-                ${types.map(t => `<option value="${t}">${t}</option>`).join('')}
-            </select>
-            <span>Дата:</span>
-            <input type="date" id="contest_date" value="${currentDate}" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
-        </div>
-        <div style="margin-top: 10px;">
-            <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Победители (максимум 2):</div>
-            <div id="contest_winners_container"></div>
-            <button id="contest_add_winner" style="margin-top: 5px; padding: 4px 10px; background: ${COLORS.bgTabActive}; border: none; cursor: pointer; font-family: ${FONT_FAMILY}; font-weight: bold;">✚ Добавить победителя</button>
-        </div>
-        <div style="margin-top: 10px;">
-            <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Участники (имена через запятую):</div>
-            <input type="text" id="contest_participants" placeholder="Имя1, Имя2, Имя3" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
-        </div>
-        <div style="margin-top: 10px;">
-            <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Носильщики:</div>
-            <input type="text" id="contest_carriers" placeholder="Имя1, Имя2 (опционально)" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
-        </div>
-        <div id="contest_warning" style="color: ${COLORS.warning}; font-size: 12px; margin-top: 8px; text-align: center; display: none;"></div>
-        <button id="contest_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgTabActive}; color:${COLORS.textDark}; border:none; cursor:pointer; font-family:${FONT_FAMILY}; font-weight:bold;">Сформировать отчёт</button>
-    `;
+        div.innerHTML = `
+            <div style="background-color: ${COLORS.bgTabActive}; padding: 4px; margin-bottom: 10px; font-weight: bold; text-align: center; color: ${COLORS.textDark};">Отпись охотничьего состязания</div>
+            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center; font-size: 13px;">
+                <span>Вид:</span>
+                <select id="contest_type" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
+                    ${types.map(t => `<option value="${t}">${t}</option>`).join('')}
+                </select>
+                <span>Дата:</span>
+                <input type="date" id="contest_date" value="${currentDate}" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
+            </div>
+            <div style="margin-top: 10px;">
+                <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Победители (максимум 2):</div>
+                <div id="contest_winners_container"></div>
+                <button id="contest_add_winner" style="margin-top: 5px; padding: 4px 10px; background: ${COLORS.bgTabActive}; border: none; cursor: pointer; font-family: ${FONT_FAMILY}; font-weight: bold;">✚ Добавить победителя</button>
+            </div>
+            <div style="margin-top: 10px;">
+                <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Участники (имена через запятую):</div>
+                <input type="text" id="contest_participants" placeholder="Имя1, Имя2, Имя3" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
+            </div>
+            <div style="margin-top: 10px;">
+                <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Носильщики:</div>
+                <input type="text" id="contest_carriers" placeholder="Имя1, Имя2 (опционально)" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
+            </div>
+            <div style="margin-top: 10px;">
+                <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Инофракционные:</div>
+                <input type="text" id="contest_info" placeholder="Дополнительная информация" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
+            </div>
+            <div id="contest_warning" style="color: ${COLORS.warning}; font-size: 12px; margin-top: 8px; text-align: center; display: none;"></div>
+            <button id="contest_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgTabActive}; color:${COLORS.textDark}; border:none; cursor:pointer; font-family:${FONT_FAMILY}; font-weight:bold;">Сформировать отчёт</button>
+        `;
 
-    const winnersContainer = div.querySelector('#contest_winners_container');
-    const addWinnerBtn = div.querySelector('#contest_add_winner');
-    const warningDiv = div.querySelector('#contest_warning');
-    const typeSelect = div.querySelector('#contest_type');
-    const dateInput = div.querySelector('#contest_date');
-    const participantsInput = div.querySelector('#contest_participants');
-    const carriersInput = div.querySelector('#contest_carriers');
+        const winnersContainer = div.querySelector('#contest_winners_container');
+        const addWinnerBtn = div.querySelector('#contest_add_winner');
+        const warningDiv = div.querySelector('#contest_warning');
+        const typeSelect = div.querySelector('#contest_type');
+        const dateInput = div.querySelector('#contest_date');
+        const participantsInput = div.querySelector('#contest_participants');
+        const carriersInput = div.querySelector('#contest_carriers');
+        const infoInput = div.querySelector('#contest_info');
 
-    // Функция создания строки победителя (имя + выбор награды)
-    function createWinnerRow(nameValue = '', rewardValue = 'медаль') {
-        const row = document.createElement('div');
-        row.style.display = 'flex';
-        row.style.gap = '8px';
-        row.style.marginBottom = '5px';
-        row.style.alignItems = 'center';
+        // Функция создания строки победителя
+        function createWinnerRow(nameValue = '', rewardValue = 'медаль', infoChecked = false) {
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.gap = '8px';
+            row.style.marginBottom = '5px';
+            row.style.alignItems = 'center';
+            row.style.flexWrap = 'wrap';
 
-        const nameInput = document.createElement('input');
-        nameInput.type = 'text';
-        nameInput.placeholder = 'Имя победителя';
-        nameInput.value = nameValue;
-        nameInput.style.flex = '1';
-        nameInput.style.padding = '4px';
-        nameInput.style.fontFamily = FONT_FAMILY;
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.placeholder = 'Имя победителя';
+            nameInput.value = nameValue;
+            nameInput.style.flex = '1';
+            nameInput.style.minWidth = '120px';
+            nameInput.style.padding = '4px';
+            nameInput.style.fontFamily = FONT_FAMILY;
 
-        const rewardGroup = document.createElement('div');
-        rewardGroup.style.display = 'flex';
-        rewardGroup.style.gap = '8px';
-        rewardGroup.style.alignItems = 'center';
+            // Группа радиокнопок
+            const rewardGroup = document.createElement('div');
+            rewardGroup.style.display = 'flex';
+            rewardGroup.style.gap = '8px';
+            rewardGroup.style.alignItems = 'center';
+            rewardGroup.style.fontSize = '14px';
 
-        const rewardLabel = document.createElement('span');
-        rewardLabel.textContent = 'Награда:';
-        rewardLabel.style.fontSize = '14px';
+            const medalRadio = document.createElement('input');
+            medalRadio.type = 'radio';
+            medalRadio.name = `reward_${Date.now()}_${Math.random()}`;
+            medalRadio.value = 'медаль';
+            medalRadio.checked = (rewardValue === 'медаль');
 
-        const medalRadio = document.createElement('input');
-        medalRadio.type = 'radio';
-        medalRadio.name = `reward_${Date.now()}_${Math.random()}`; // уникальное имя для группы
-        medalRadio.value = 'медаль';
-        medalRadio.checked = (rewardValue === 'медаль');
+            const medalLabel = document.createElement('label');
+            medalLabel.textContent = 'медаль';
+            medalLabel.style.marginRight = '4px';
 
-        const medalLabel = document.createElement('label');
-        medalLabel.textContent = 'медаль';
-        medalLabel.style.fontSize = '14px';
-        medalLabel.style.marginRight = '4px';
+            const pointsRadio = document.createElement('input');
+            pointsRadio.type = 'radio';
+            pointsRadio.name = medalRadio.name;
+            pointsRadio.value = 'баллы';
+            pointsRadio.checked = (rewardValue === 'баллы');
 
-        const pointsRadio = document.createElement('input');
-        pointsRadio.type = 'radio';
-        pointsRadio.name = medalRadio.name;
-        pointsRadio.value = 'баллы';
-        pointsRadio.checked = (rewardValue === 'баллы');
+            const pointsLabel = document.createElement('label');
+            pointsLabel.textContent = 'баллы';
 
-        const pointsLabel = document.createElement('label');
-        pointsLabel.textContent = 'баллы';
-        pointsLabel.style.fontSize = '14px';
+            rewardGroup.appendChild(medalRadio);
+            rewardGroup.appendChild(medalLabel);
+            rewardGroup.appendChild(pointsRadio);
+            rewardGroup.appendChild(pointsLabel);
 
-        rewardGroup.appendChild(rewardLabel);
-        rewardGroup.appendChild(medalRadio);
-        rewardGroup.appendChild(medalLabel);
-        rewardGroup.appendChild(pointsRadio);
-        rewardGroup.appendChild(pointsLabel);
+            // Чекбокс "инофракционные" (скрыт по умолчанию)
+            const infoLabel = document.createElement('label');
+            infoLabel.style.display = 'none';
+            infoLabel.style.alignItems = 'center';
+            infoLabel.style.gap = '4px';
+            infoLabel.style.fontSize = '14px';
+            infoLabel.style.whiteSpace = 'nowrap';
 
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = '✕';
-        removeBtn.style.background = '#2E1A02';
-        removeBtn.style.color = 'white';
-        removeBtn.style.border = 'none';
-        removeBtn.style.borderRadius = '3px';
-        removeBtn.style.cursor = 'pointer';
-        removeBtn.style.padding = '2px 6px';
-        removeBtn.style.fontSize = '12px';
-        removeBtn.title = 'Удалить строку';
+            const infoCheckbox = document.createElement('input');
+            infoCheckbox.type = 'checkbox';
+            infoCheckbox.checked = infoChecked;
+            infoCheckbox.style.accentColor = '#2E1A02';
 
-        row.appendChild(nameInput);
-        row.appendChild(rewardGroup);
-        row.appendChild(removeBtn);
+            infoLabel.appendChild(infoCheckbox);
+            infoLabel.appendChild(document.createTextNode('инофракционный'));
 
-        removeBtn.onclick = () => {
-            if (winnersContainer.children.length > 1) {
-                row.remove();
-            } else {
-                nameInput.value = '';
-                medalRadio.checked = true;
-            }
-        };
+            const removeBtn = document.createElement('button');
+            removeBtn.textContent = '✕';
+            removeBtn.style.background = '#2E1A02';
+            removeBtn.style.color = 'white';
+            removeBtn.style.border = 'none';
+            removeBtn.style.borderRadius = '3px';
+            removeBtn.style.cursor = 'pointer';
+            removeBtn.style.padding = '2px 6px';
+            removeBtn.style.fontSize = '12px';
+            removeBtn.title = 'Удалить строку';
 
-        return row;
-    }
+            row.appendChild(nameInput);
+            row.appendChild(rewardGroup);
+            row.appendChild(infoLabel);
+            row.appendChild(removeBtn);
 
-    // Инициализация: одна пустая строка
-    winnersContainer.appendChild(createWinnerRow());
+            row._infoLabel = infoLabel;
+            row._infoCheckbox = infoCheckbox;
 
-    // Обработчик добавления нового победителя (максимум 2)
-    addWinnerBtn.onclick = () => {
-        if (winnersContainer.children.length >= 2) {
-            showWarning('Максимум может быть 2 победителя.');
-            return;
-        }
-        winnersContainer.appendChild(createWinnerRow());
-    };
-
-    // Обработчик кнопки "Сформировать отчёт"
-    div.querySelector('#contest_submit').onclick = async (e) => {
-        e.preventDefault();
-        warningDiv.style.display = 'none';
-
-        const type = typeSelect.value;
-        const dateISO = dateInput.value;
-        if (!dateISO) { showWarning('Укажите дату'); return; }
-        const date = formatDateForReport(dateISO);
-
-        // Собираем победителей
-        const winnerRows = winnersContainer.querySelectorAll('div');
-        const winners = [];
-        let hasError = false;
-
-        for (const row of winnerRows) {
-            const nameInput = row.querySelector('input[placeholder="Имя победителя"]');
-            const rewardRadios = row.querySelectorAll('input[type="radio"]');
-            if (!nameInput || rewardRadios.length === 0) continue;
-
-            const name = nameInput.value.trim();
-            // Пропускаем пустые строки
-            if (!name) continue;
-
-            // Определяем выбранную награду
-            let reward = 'медаль';
-            for (const radio of rewardRadios) {
-                if (radio.checked) {
-                    reward = radio.value;
-                    break;
+            removeBtn.onclick = () => {
+                if (winnersContainer.children.length > 1) {
+                    row.remove();
+                } else {
+                    nameInput.value = '';
+                    medalRadio.checked = true;
+                    infoCheckbox.checked = false;
                 }
-            }
+            };
 
-            // Проверяем имя
-            const formatted = await formatNameWithId(name);
-            if (formatted === null) {
-                showWarning(`Игрок "${name}" не найден.`);
-                hasError = true;
-                break;
-            }
-            winners.push({ formatted, reward });
+            return row;
         }
 
-        if (hasError) return;
-
-        if (winners.length === 0) {
-            showWarning('Укажите хотя бы одного победителя.');
-            return;
+        // Обновление видимости чекбоксов "инофракционные"
+        function updateInfoCheckboxesVisibility() {
+            const isDelegation = typeSelect.value === 'делегационное';
+            const rows = winnersContainer.querySelectorAll('div');
+            rows.forEach(row => {
+                if (row._infoLabel) {
+                    row._infoLabel.style.display = isDelegation ? 'flex' : 'none';
+                }
+            });
         }
 
-        // Форматируем победителей
-        const formattedWinners = winners.map(w => `${w.formatted} (${w.reward})`);
+        winnersContainer.appendChild(createWinnerRow());
 
-        // Участники
-        const participantsRaw = participantsInput.value.trim();
-        if (!participantsRaw) { showWarning('Укажите участников.'); return; }
-        const participantNames = participantsRaw.split(',').map(s => s.trim()).filter(s => s);
-        if (participantNames.length === 0) { showWarning('Введите хотя бы одного участника.'); return; }
-        const formattedParticipants = [];
-        for (const p of participantNames) {
-            const formatted = await formatNameWithId(p);
-            if (formatted === null) {
-                showWarning(`Игрок "${p}" не найден.!`);
+        addWinnerBtn.onclick = () => {
+            if (winnersContainer.children.length >= 2) {
+                showWarning('Максимум может быть 2 победителя.');
                 return;
             }
-            formattedParticipants.push(formatted);
-        }
+            const newRow = createWinnerRow();
+            winnersContainer.appendChild(newRow);
+            updateInfoCheckboxesVisibility();
+        };
 
-        // Носильщики (всегда добавляем строку)
-        let carriersFormatted = '';
-        const carriersRaw = carriersInput.value.trim();
-        if (carriersRaw) {
-            const carrierNames = carriersRaw.split(',').map(s => s.trim()).filter(s => s);
-            const formattedCarriers = [];
-            for (const c of carrierNames) {
-                const formatted = await formatNameWithId(c);
+        typeSelect.addEventListener('change', updateInfoCheckboxesVisibility);
+        updateInfoCheckboxesVisibility();
+
+        // Обработчик кнопки "Сформировать отчёт"
+        div.querySelector('#contest_submit').onclick = async (e) => {
+            e.preventDefault();
+            warningDiv.style.display = 'none';
+
+            const type = typeSelect.value;
+            const dateISO = dateInput.value;
+            if (!dateISO) { showWarning('Укажите дату'); return; }
+            const date = formatDateForReport(dateISO);
+
+            const isDelegation = type === 'делегационное';
+
+            const winnerRows = winnersContainer.querySelectorAll('div');
+            const winners = [];
+            let hasError = false;
+
+            for (const row of winnerRows) {
+                const nameInput = row.querySelector('input[placeholder="Имя победителя"]');
+                const rewardRadios = row.querySelectorAll('input[type="radio"]');
+                const infoCheckbox = row.querySelector('input[type="checkbox"]');
+                if (!nameInput || rewardRadios.length === 0 || !infoCheckbox) continue;
+
+                const name = nameInput.value.trim();
+                if (!name) continue;
+
+                let reward = 'медаль';
+                for (const radio of rewardRadios) {
+                    if (radio.checked) {
+                        reward = radio.value;
+                        break;
+                    }
+                }
+
+                const formatted = await formatNameWithId(name);
                 if (formatted === null) {
-                    showWarning(`Игрок "${c}" не найден!`);
+                    showWarning(`Игрок "${name}" не найден.`);
+                    hasError = true;
+                    break;
+                }
+
+                const isInfo = isDelegation && infoCheckbox.checked;
+                winners.push({ formatted, reward, isInfo });
+            }
+
+            if (hasError) return;
+
+            if (winners.length === 0) {
+                showWarning('Укажите хотя бы одного победителя.');
+                return;
+            }
+
+            const formattedWinners = winners.map(w => {
+                if (w.isInfo) {
+                    return `${w.formatted} (баллы в союзную медаль)`;
+                } else {
+                    return `${w.formatted} (${w.reward})`;
+                }
+            });
+
+            const participantsRaw = participantsInput.value.trim();
+            if (!participantsRaw) { showWarning('Укажите участников.'); return; }
+            const participantNames = participantsRaw.split(',').map(s => s.trim()).filter(s => s);
+            if (participantNames.length === 0) { showWarning('Введите хотя бы одного участника.'); return; }
+            const formattedParticipants = [];
+            for (const p of participantNames) {
+                const formatted = await formatNameWithId(p);
+                if (formatted === null) {
+                    showWarning(`Игрок "${p}" не найден!`);
                     return;
                 }
-                formattedCarriers.push(formatted);
+                formattedParticipants.push(formatted);
             }
-            carriersFormatted = `\n[b]Носильщики:[/b] ${formattedCarriers.join(', ')}`;
-        } else {
-            carriersFormatted = `\n[b]Носильщики:[/b] —.`;
+
+            // Носильщики
+            let carriersFormatted = '';
+            const carriersRaw = carriersInput.value.trim();
+            if (carriersRaw) {
+                const carrierNames = carriersRaw.split(',').map(s => s.trim()).filter(s => s);
+                const formattedCarriers = [];
+                for (const c of carrierNames) {
+                    const formatted = await formatNameWithId(c);
+                    if (formatted === null) {
+                        showWarning(`Игрок "${c}" не найден!`);
+                        return;
+                    }
+                    formattedCarriers.push(formatted);
+                }
+                carriersFormatted = `\n[b]Носильщики:[/b] ${formattedCarriers.join(', ')}.`;
+            } else {
+                carriersFormatted = `\n[b]Носильщики:[/b] —.`;
+            }
+
+            // Инофракционные — только для делегационного
+            let infoFormatted = '';
+            if (isDelegation) {
+                const infoRaw = infoInput.value.trim();
+                if (infoRaw) {
+                    const infoNames = infoRaw.split(',').map(s => s.trim()).filter(s => s);
+                    const formattedInfo = [];
+                    for (const n of infoNames) {
+                        const formatted = await formatNameWithId(n);
+                        if (formatted === null) {
+                            showWarning(`Игрок "${n}" не найден!`);
+                            return;
+                        }
+                        formattedInfo.push(formatted);
+                    }
+                    infoFormatted = `\n[b]Инофракционные:[/b] ${formattedInfo.join(', ')}.`;
+                } else {
+                    infoFormatted = `\n[b]Инофракционные:[/b] —.`;
+                }
+            }
+
+            let report = `[b]Вид охотничьего состязания: ${type}, ${date}.[/b]\n`;
+            report += `[b]Победители:[/b] ${formattedWinners.join(', ')}\n`;
+            report += `[b]Участники:[/b] ${formattedParticipants.join(', ')}`;
+            report += carriersFormatted;
+            report += infoFormatted;
+
+            insertReport(report);
+        };
+
+        function showWarning(msg) {
+            warningDiv.textContent = msg;
+            warningDiv.style.display = 'block';
         }
 
-        // Собираем отчёт
-        let report = `[b]Вид охотничьего состязания: ${type}, ${date}.[/b]\n`;
-        report += `[b]Победители:[/b] ${formattedWinners.join(', ')}\n`;
-        report += `[b]Участники:[/b] ${formattedParticipants.join(', ')}.`;
-        report += carriersFormatted;
-
-        insertReport(report);
-    };
-
-    function showWarning(msg) {
-        warningDiv.textContent = msg;
-        warningDiv.style.display = 'block';
+        return div;
     }
 
-    return div;
-    }
-
-    // ---------- ВКЛАДКА 4: Отмена охотничьего состязания (без изменений) ----------
+    // ---------- ВКЛАДКА 4: Отмена охотничьего состязания ----------
     function createContestCancelTab() {
         const div = document.createElement('div');
         div.style.display = 'none';
@@ -645,7 +734,7 @@ function createContestReportTab() {
         div.style.border = '1px solid ' + COLORS.border;
         div.style.fontFamily = FONT_FAMILY;
 
-        const types = ['одиночное количественное', 'одиночное видовое', 'командное', 'делегационное'];
+        const types = ['командное', 'одиночное', 'делегационное'];
 
         div.innerHTML = `
             <div style="background-color: ${COLORS.bgTabActive}; padding: 4px; margin-bottom: 10px; font-weight: bold; text-align: center; color: ${COLORS.textDark};">Отмена охотничьего состязания</div>
@@ -691,7 +780,7 @@ function createContestReportTab() {
         panel.style.cssText = `border: 1px solid ${COLORS.border}; margin: 20px 0 10px 0; padding: 10px; font-family: ${FONT_FAMILY}; color: ${COLORS.textDark}; background-color: ${COLORS.bgMain};`;
 
         panel.innerHTML = `
-            <div class="panel-header" style="background-color: ${COLORS.bgTabActive}; padding: 8px 12px; margin: -10px -10px 10px -10px; font-size: 18px; font-weight: bold; text-align: center; color: ${COLORS.textDark};">Охотничьи патрули</div>
+            <div class="panel-header" style="background-color: ${COLORS.bgTabActive}; padding: 8px 12px; margin: -10px -10px 10px -10px; font-size: 18px; font-weight: bold; text-align: center; color: ${COLORS.textDark};">Помощник охоты</div>
             <div class="tab-bar" style="display: flex; border-bottom: 1px solid ${COLORS.border}; margin-bottom: 10px;">
                 <div class="hunt-tab-btn active" data-tab="patrol" style="padding: 6px 12px; background: ${COLORS.bgTabActive}; color: ${COLORS.textDark}; cursor: pointer; margin-right: 4px;">Отпись патруля</div>
                 <div class="hunt-tab-btn" data-tab="patrol_cancel" style="padding: 6px 12px; background: ${COLORS.bgTabInactive}; color: #D1AD88; cursor: pointer; margin-right: 4px;">Отмена патруля</div>
@@ -745,7 +834,7 @@ function createContestReportTab() {
 
     // ---------- ВСТАВКА ПАНЕЛИ ----------
     function insertPanel() {
-        addBackgroundStyle(); // добавляем фон
+        addBackgroundStyle();
         const panel = createMainPanel();
         const sendButton = document.querySelector('#send_comment');
         if (sendButton) {
