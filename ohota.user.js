@@ -831,8 +831,8 @@
         panel.innerHTML = `
             <div class="panel-header" style="background-color: ${COLORS.bgTabActive}; padding: 8px 12px; margin: -10px -10px 10px -10px; font-size: 18px; font-weight: bold; text-align: center; color: ${COLORS.textDark};">Помощник охоты</div>
             <div class="tab-bar" style="display: flex; border-bottom: 1px solid ${COLORS.border}; margin-bottom: 10px;">
-                <div class="hunt-tab-btn active" data-tab="patrol" style="padding: 6px 12px; background: ${COLORS.bgTabActive}; color: ${COLORS.textDark}; cursor: pointer; margin-right: 4px;">Отпись патруля</div>
-                <div class="hunt-tab-btn" data-tab="patrol_cancel" style="padding: 6px 12px; background: ${COLORS.bgTabInactive}; color: #D1AD88; cursor: pointer; margin-right: 4px;">Отмена патруля</div>
+                <div class="hunt-tab-btn active" data-tab="patrol" style="padding: 6px 12px; background: ${COLORS.bgTabActive}; color: ${COLORS.textDark}; cursor: pointer; margin-right: 4px;">Отпись охоты</div>
+                <div class="hunt-tab-btn" data-tab="patrol_cancel" style="padding: 6px 12px; background: ${COLORS.bgTabInactive}; color: #D1AD88; cursor: pointer; margin-right: 4px;">Отмена охоты</div>
                 <div class="hunt-tab-btn" data-tab="contest" style="padding: 6px 12px; background: ${COLORS.bgTabInactive}; color: #D1AD88; cursor: pointer; margin-right: 4px;">Отпись состязания</div>
                 <div class="hunt-tab-btn" data-tab="contest_cancel" style="padding: 6px 12px; background: ${COLORS.bgTabInactive}; color: #D1AD88; cursor: pointer;">Отмена состязания</div>
             </div>
