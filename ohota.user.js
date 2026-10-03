@@ -779,6 +779,53 @@
 
         return div;
     }
+        // ---------- ВКЛАДКА 4: Отмена охотничьего состязания ----------
+    function createContestCancelTab() {
+        const div = document.createElement('div');
+        div.style.display = 'none';
+        div.style.marginBottom = '15px';
+        div.style.padding = '10px';
+        div.style.backgroundColor = COLORS.bgMain;
+        div.style.border = '1px solid ' + COLORS.border;
+        div.style.fontFamily = FONT_FAMILY;
+
+        const types = ['командное', 'одиночное', 'делегационное'];
+
+        div.innerHTML = `
+            <div style="background-color: ${COLORS.bgTabActive}; padding: 4px; margin-bottom: 10px; font-weight: bold; text-align: center; color: ${COLORS.textDark};">Отмена охотничьего состязания</div>
+            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center; font-size: 13px;">
+                <span>Вид:</span>
+                <select id="contest_cancel_type" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
+                    ${types.map(t => `<option value="${t}">${t}</option>`).join('')}
+                </select>
+                <span>Дата:</span>
+                <input type="date" id="contest_cancel_date" value="${getTodayISO()}" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
+            </div>
+            <div id="contest_cancel_warning" style="color: ${COLORS.warning}; font-size: 12px; margin-top: 8px; text-align: center; display: none;"></div>
+            <button id="contest_cancel_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgTabActive}; color:${COLORS.textDark}; border:none; cursor:pointer; font-family:${FONT_FAMILY}; font-weight:bold;">Сформировать отчёт</button>
+        `;
+
+        const warningDiv = div.querySelector('#contest_cancel_warning');
+        const typeSelect = div.querySelector('#contest_cancel_type');
+        const dateInput = div.querySelector('#contest_cancel_date');
+
+        div.querySelector('#contest_cancel_submit').onclick = (e) => {
+            e.preventDefault();
+            warningDiv.style.display = 'none';
+
+            const type = typeSelect.value;
+            const dateISO = dateInput.value;
+            if (!dateISO) {
+                warningDiv.textContent = 'Укажите дату.';
+                warningDiv.style.display = 'block';
+                return;
+            }
+            const date = formatDateForReport(dateISO);
+            const report = `[b]Вид охотничьего состязания: ${type}, ${date}.[/b]\n[b]Отмена.[/b]`;
+            insertReport(report);
+        };
+
+        return div;
     }
 
     // ---------- ГЛАВНАЯ ПАНЕЛЬ ----------
