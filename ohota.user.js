@@ -101,9 +101,10 @@
         }
     }
 
-    // Подсчёт баллов по истории
-    function calculateScore(historyText) {
+    // Подсчёт баллов по истории (с настраиваемыми весами)
+    function calculateScore(historyText, weights) {
         if (!historyText) return 0;
+        const w = weights || { thin: 1, normal: 2, fat: 4 };
         const text = historyText;
         const sentences = text.split(/[.!?]\s*/).filter(s => s.trim().length > 0);
         let totalScore = 0;
@@ -113,9 +114,9 @@
                 let match;
                 while ((match = regex.exec(sentence)) !== null) {
                     const adj = match[1];
-                    if (adj.includes('упитанн')) totalScore += 4;
-                    else if (adj.includes('обычн')) totalScore += 2;
-                    else if (adj.includes('хил')) totalScore += 1;
+                    if (adj.includes('упитанн')) totalScore += w.fat;
+                    else if (adj.includes('обычн')) totalScore += w.normal;
+                    else if (adj.includes('хил')) totalScore += w.thin;
                 }
             }
         }
@@ -131,7 +132,7 @@
         }
     }
 
-  // ---------- ВКЛАДКА 1: Отпись охотничьего патруля ----------
+    // ---------- ВКЛАДКА 1: Отпись охотничьего патруля ----------
     function createPatrolReportTab() {
         const div = document.createElement('div');
         div.style.display = 'block';
@@ -172,6 +173,26 @@
                     <input type="checkbox" id="patrol_include_info" style="margin-right: 4px;"> Включать инофракционных игроков в отчёт
                 </label>
             </div>
+
+            <details style="margin-top: 10px; background: rgba(255,255,255,0.2); padding: 6px 8px; border: 1px solid ${COLORS.border};">
+                <summary style="cursor: pointer; font-weight: bold; font-size: 13px;"> Настройка баллов</summary>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; font-size: 13px;">
+                    <label style="display: flex; flex-direction: column; gap: 4px;">
+                        Хилая
+                        <input type="number" id="score_thin" value="1" min="0" step="1" style="padding: 4px; font-family: ${FONT_FAMILY};">
+                    </label>
+                    <label style="display: flex; flex-direction: column; gap: 4px;">
+                        Обычная
+                        <input type="number" id="score_normal" value="2" min="0" step="1" style="padding: 4px; font-family: ${FONT_FAMILY};">
+                    </label>
+                    <label style="display: flex; flex-direction: column; gap: 4px;">
+                        Упитанная
+                        <input type="number" id="score_fat" value="4" min="0" step="1" style="padding: 4px; font-family: ${FONT_FAMILY};">
+                    </label>
+                </div>
+                <button id="score_reset" type="button" style="margin-top: 8px; padding: 4px 10px; background: #2E1A02; color: white; border: none; cursor: pointer; font-family: ${FONT_FAMILY}; font-weight: bold; font-size: 12px; border-radius: 3px;">Сбросить (1 / 2 / 4)</button>
+            </details>
+
             <div style="margin-top: 10px;">
                 <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Участники (имя и история добычи):</div>
                 <div id="patrol_members_container"></div>
@@ -191,6 +212,30 @@
         const infoInput = div.querySelector('#patrol_info');
         const includeLocationCheck = div.querySelector('#patrol_include_location');
         const includeInfoCheck = div.querySelector('#patrol_include_info');
+
+        // Элементы настроек баллов
+        const scoreThinInput = div.querySelector('#score_thin');
+        const scoreNormalInput = div.querySelector('#score_normal');
+        const scoreFatInput = div.querySelector('#score_fat');
+        const scoreResetBtn = div.querySelector('#score_reset');
+
+        scoreResetBtn.onclick = () => {
+            scoreThinInput.value = 1;
+            scoreNormalInput.value = 2;
+            scoreFatInput.value = 4;
+        };
+
+        function getWeights() {
+            const parseNum = (el, def) => {
+                const v = parseInt(el.value, 10);
+                return Number.isFinite(v) && v >= 0 ? v : def;
+            };
+            return {
+                thin: parseNum(scoreThinInput, 1),
+                normal: parseNum(scoreNormalInput, 2),
+                fat: parseNum(scoreFatInput, 4)
+            };
+        }
 
         function createMemberRow(nameValue = '', historyValue = '') {
             const row = document.createElement('div');
@@ -261,6 +306,8 @@
             if (!dateISO) { showWarning('Укажите дату'); return; }
             const date = formatDateForReport(dateISO);
 
+            const weights = getWeights();
+
             const rows = container.querySelectorAll('div');
             const members = [];
             let hasError = false;
@@ -288,7 +335,7 @@
                     break;
                 }
 
-                const score = calculateScore(history);
+                const score = calculateScore(history, weights);
                 members.push({ formatted, score });
             }
 
@@ -418,7 +465,6 @@
     }
 
     // ---------- ВКЛАДКА 3: Отпись охотничьего состязания ----------
-    // ---------- ВКЛАДКА 3: Отпись охотничьего состязания ----------
     function createContestReportTab() {
         const div = document.createElement('div');
         div.style.display = 'none';
@@ -442,7 +488,7 @@
                 <input type="date" id="contest_date" value="${currentDate}" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
             </div>
             <div style="margin-top: 10px;">
-                <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Победители (максимум 2):</div>
+                <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Победители (максимум 2, для делегационного — 3):</div>
                 <div id="contest_winners_container"></div>
                 <button id="contest_add_winner" style="margin-top: 5px; padding: 4px 10px; background: ${COLORS.bgTabActive}; border: none; cursor: pointer; font-family: ${FONT_FAMILY}; font-weight: bold;">✚ Добавить победителя</button>
             </div>
@@ -456,7 +502,7 @@
             </div>
             <div style="margin-top: 10px;">
                 <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">Инофракционные:</div>
-                <input type="text" id="contest_info" placeholder="Дополнительная информация" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
+                <input type="text" id="contest_info" placeholder="Имя1, Имя2 (опционально)" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
             </div>
             <div id="contest_warning" style="color: ${COLORS.warning}; font-size: 12px; margin-top: 8px; text-align: center; display: none;"></div>
             <button id="contest_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgTabActive}; color:${COLORS.textDark}; border:none; cursor:pointer; font-family:${FONT_FAMILY}; font-weight:bold;">Сформировать отчёт</button>
@@ -471,7 +517,10 @@
         const carriersInput = div.querySelector('#contest_carriers');
         const infoInput = div.querySelector('#contest_info');
 
-        // Функция создания строки победителя
+        function getMaxWinners() {
+            return typeSelect.value === 'делегационное' ? 3 : 2;
+        }
+
         function createWinnerRow(nameValue = '', rewardValue = 'медаль', infoChecked = false) {
             const row = document.createElement('div');
             row.style.display = 'flex';
@@ -489,7 +538,6 @@
             nameInput.style.padding = '4px';
             nameInput.style.fontFamily = FONT_FAMILY;
 
-            // Группа радиокнопок
             const rewardGroup = document.createElement('div');
             rewardGroup.style.display = 'flex';
             rewardGroup.style.gap = '8px';
@@ -520,7 +568,6 @@
             rewardGroup.appendChild(pointsRadio);
             rewardGroup.appendChild(pointsLabel);
 
-            // Чекбокс "инофракционные" (скрыт по умолчанию)
             const infoLabel = document.createElement('label');
             infoLabel.style.display = 'none';
             infoLabel.style.alignItems = 'center';
@@ -568,7 +615,6 @@
             return row;
         }
 
-        // Обновление видимости чекбоксов "инофракционные"
         function updateInfoCheckboxesVisibility() {
             const isDelegation = typeSelect.value === 'делегационное';
             const rows = winnersContainer.querySelectorAll('div');
@@ -582,8 +628,12 @@
         winnersContainer.appendChild(createWinnerRow());
 
         addWinnerBtn.onclick = () => {
-            if (winnersContainer.children.length >= 2) {
-                showWarning('Максимум может быть 2 победителя.');
+            const maxWinners = getMaxWinners();
+            if (winnersContainer.children.length >= maxWinners) {
+                const isDelegation = typeSelect.value === 'делегационное';
+                showWarning(isDelegation
+                    ? 'Максимум может быть 3 победителя.'
+                    : 'Максимум может быть 2 победителя.');
                 return;
             }
             const newRow = createWinnerRow();
@@ -594,7 +644,6 @@
         typeSelect.addEventListener('change', updateInfoCheckboxesVisibility);
         updateInfoCheckboxesVisibility();
 
-        // Обработчик кнопки "Сформировать отчёт"
         div.querySelector('#contest_submit').onclick = async (e) => {
             e.preventDefault();
             warningDiv.style.display = 'none';
@@ -686,7 +735,7 @@
                 carriersFormatted = `\n[b]Носильщики:[/b] —.`;
             }
 
-            // Инофракционные — только для делегационного
+            // Инофракционные
             let infoFormatted = '';
             if (isDelegation) {
                 const infoRaw = infoInput.value.trim();
