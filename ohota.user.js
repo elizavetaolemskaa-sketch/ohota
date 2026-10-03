@@ -177,7 +177,7 @@
                 </div>
                 <span style="padding-top: 6px;">Носильщики:</span>
                 <input type="text" id="patrol_carriers" placeholder="Имя1, Имя2 (опционально)" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
-                <span style="padding-top: 6px;">Информационные:</span>
+                <span style="padding-top: 6px;">Инофракционные:</span>
                 <input type="text" id="patrol_info" placeholder="Имя1, Имя2 (опционально)" style="width: 100%; padding: 4px; font-family: ${FONT_FAMILY};">
             </div>
             <div style="margin-top: 6px;">
@@ -187,7 +187,7 @@
             </div>
             <div style="margin-top: 6px;">
                 <label style="font-size: 13px;">
-                    <input type="checkbox" id="patrol_include_info" style="margin-right: 4px;"> Включать информационные в отчёт
+                    <input type="checkbox" id="patrol_include_info" style="margin-right: 4px;"> Включать инофракционных игроков в отчёт
                 </label>
             </div>
 
@@ -446,7 +446,7 @@
             const includeLocation = includeLocationCheck.checked;
             const includeInfo = includeInfoCheck.checked;
 
-            // Информационные (с ID)
+            // Инофракционные
             let infoFormatted = '';
             if (includeInfo) {
                 const infoRaw = infoInput.value.trim();
@@ -461,9 +461,9 @@
                         }
                         formattedInfo.push(formatted);
                     }
-                    infoFormatted = `[b]Информационные:[/b] ${formattedInfo.join(', ')}.`;
+                    infoFormatted = `[b]Инофракционные:[/b] ${formattedInfo.join(', ')}.`;
                 } else {
-                    infoFormatted = `[b]Информационные:[/b] —.`;
+                    infoFormatted = `[b]Инофракционные:[/b] —.`;
                 }
             }
 
